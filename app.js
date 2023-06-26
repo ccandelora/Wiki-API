@@ -29,51 +29,75 @@ const articleSchema = new mongoose.Schema ({
 
 const Article = mongoose.model("Article", articleSchema);
 
-app.get("/articles", function(req, res) {
-    Article.find().then((articles) => {
-        //res.render("articles", {articles: articles});
-        res.json(articles);
+app.route("/articles")
+    .get(function(req, res) {
+        Article.find().then((articles) => {
+            //res.render("articles", {articles: articles});
+            res.json(articles);
+        }).catch((err) => {
+            res.send(err);
+        });
+    })
+    .post(function(req, res) {
+        const article = new Article({
+            title: req.body.title,
+            content: req.body.content
+        });
+        article.save().then(() => {
+            //res.redirect("/articles");
+            res.send("Article saved");
+        }).catch((err) => { 
+            res.send(err);
+        });
+    })
+    .delete(function(req, res) {
+        Article.deleteMany().then(() => {
+            res.send("All articles deleted");
+            //res.redirect("/articles");
+        }).catch((err) => { 
+            res.send(err);
+        });
     });
-});
 
-app.get("/articles/:title", function(req, res) {
-    Article.findOne({title: req.params.title}).then((article) => {
-        //res.render("article", {article: article});
-        res.json(article);
+app.route("/articles/:title")
+    .get(function(req, res) {
+        Article.findOne({title: req.params.title}).then((article) => {
+            //res.render("article", {article: article});
+            res.json(article);
+        }).catch((err) => { 
+            res.send(err);
+        });
+    })   
+    .patch(function(req, res) {
+        Article.updateOne({title: req.params.title}, {$set: req.body}).then(() => {
+            //res.redirect("/articles/" + req.params.title);
+            res.send("Article updated");
+        }).catch((err) => { 
+            res.send(err);
+        });
+    })    
+    .put(function(req, res) {
+        Article.updateOne({title: req.params.title}, {$set: req.body}, {overwrite: true}).then(() => {
+            //res.redirect("/articles" + req.params.title);
+            res.send("Article updated");
+        }).catch((err) => { 
+            res.send(err);
+        });
+    })
+    .delete(function(req, res) {
+        Article.deleteOne({title: req.params.title}).then(() => {
+            //res.redirect("/articles" + req.params.title);
+            res.send("Article deleted");
+        }).catch((err) => { 
+            res.send(err);
+        });
     });
-});
-
-app.post("/articles", function(req, res) {
-    const article = new Article({
-        title: req.body.title,
-        content: req.body.content
-    });
-    article.save().then(() => {
-        res.redirect("/articles");
-    });
-});
-
-app.put("/articles/:title", function(req, res) {
-    Article.updateOne({title: req.params.title}, {title: req.body.title, content: req.body.content}, {overwrite: true}).then(() => {
-        res.redirect("/articles" + req.params.title);
-    });
-});
-
-app.patch("/articles/:title", function(req, res) {
-    Article.updateOne({title: req.params.title}, {$set: req.body}).then(() => {
-        res.redirect("/articles/" + req.params.title);
-    });
-});
-
-app.delete("/articles/:title", function(req, res) {
-    Article.deleteOne({title: req.params.title}).then(() => {
-        res.redirect("/articles" + req.params.title);
-    });
-});
 
 
 connectDB().then(() => {
     app.listen(PORT, function() {
       console.log("listening to requests");
     });
-  });
+  }).catch((err) => { 
+    res.send(err);
+});
